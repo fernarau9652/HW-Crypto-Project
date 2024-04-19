@@ -1,9 +1,9 @@
-/**********************************************
+/**************************************
 ECE 6960: Project
 Fernando Araujo, Elmir Dzaka
 
 Post-Quantum Signature Schnorr Scheme
-**********************************************/
+***************************************/
 
 // Define prime number (p)
 number p;
@@ -13,9 +13,8 @@ number p;
 ring r = integer, (x), lp;
 
 
-
-/*
-Procedure for generating the public key is as follows:
+/******************************************************************************************/
+/* Procedure for generating the public key is as follows:
 
 1. Select at random the locally invertible vector A, A', and N having local order equal to q.
 2. Select at random two global left-sided units L and L'.
@@ -28,5 +27,31 @@ Procedure for generating the public key is as follows:
 
 OUTPUT: the public key as triple of the vectors Y, Z, and T.
 */
+
+
+
+
+/******************************************************************************************/
+/* Procedure for generating the signature
+
+
+
+
+*/
+
+
+
+
+
+/******************************************************************************************/
+/* Procedure for verifying the signature
+
+
+
+
+
+*/
+
+
 
 
