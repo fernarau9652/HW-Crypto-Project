@@ -5,12 +5,130 @@ Fernando Araujo, Elmir Dzaka
 Post-Quantum Signature Schnorr Scheme
 ***************************************/
 
-// Define prime number (p)
-number p;
+// Vector product between two quaterions
+proc vec_product (list A, list B)
+{
+list AB;
 
+number a1 = A[1];
+number a2 = A[2];
+number a3 = A[3];
+number a4 = A[4];
+
+number b1 = B[1];
+number b2 = B[2];
+number b3 = B[3];
+number b4 = B[4];
+
+number ab1 = (a1 * b1) - (a2 * b2) - (a3 * b3) - (a4 * b4);
+number ab2 = (a1 * b2) + (a2 * b1) + (a3 * b4) - (a4 * b3);
+number ab3 = (a1 * b3) - (a2 * b4) + (a3 * b1) + (a4 * b2);
+number ab4 = (a1 * b4) + (a2 * b3) - (a3 * b2) + (a4 * b1);
+
+AB = ab1, ab2, ab3, ab4;
+
+return(AB)
+}
+
+
+// Vector conjugate
+proc vec_conj (list A)
+{
+number a1 = A[1];
+number a2 = A[2];
+number a3 = A[3];
+number a4 = A[4];
+
+list A_ = a1, -a2, -a3, -a4;
+
+return(A_)
+}
+
+/*
+// Vector norm
+proc vec_norm (list A)
+{
+number a1 = A[1];
+number a2 = A[2];
+number a3 = A[3];
+number a4 = A[4];
+
+number sum = a1^2 + a2^2 + a3^2 + a4^2;
+
+
+number normA = intRoot(sum);
+
+return(normA)
+} // */
+
+
+
+// Define prime number (p)
+//number p = 7;
 
 // Define the ring
-ring r = integer, (x), lp;
+ring r = (7, integer), (x), lp;
+//ring r = integer, (x), lp;
+
+
+// Define invertible vectors Q and G
+// invertible: A[1]*A[2] != A[3]*A[4]
+list Q = 1,2,3,4;
+list G = 2,3,4,5;
+
+// perform Q * G
+list QG = vec_product(Q,G);
+printf("Q * G = (%s, %s, %s, %s)", QG[1], QG[2], QG[3], QG[4]);
+
+// perform G * Q
+list GQ = vec_product(G,Q);
+printf("G * Q = (%s, %s, %s, %s)", GQ[1], GQ[2], GQ[3], GQ[4]);
+"Q * G != G * Q";
+"";
+
+// Generate non-invertible vector N of order p
+// non-invertible: A[1]*A[2] == A[3]*A[4]
+list N = 2,1,1,2;
+
+// perform N * G
+list NG = vec_product(N,G);
+printf("N * G = (%s, %s, %s, %s)", NG[1], NG[2], NG[3], NG[4]);
+
+// perform G * N
+list GN = vec_product(G,N);
+printf("G * N = (%s, %s, %s, %s)", GN[1], GN[2], GN[3], GN[4]);
+"N * G != G * N";
+"";
+
+
+// perform N * Q
+list NQ = vec_product(N,Q);
+printf("N * Q = (%s, %s, %s, %s)", NQ[1], NQ[2], NQ[3], NQ[4]);
+
+// perform Q * N
+list QN = vec_product(Q,N);
+printf("Q * N = (%s, %s, %s, %s)", QN[1], QN[2], QN[3], QN[4]);
+"N * Q != Q * N";
+"";
+
+/*
+list QQ1 = vec_product(Q,Q);
+printf("Q * Q = (%s, %s, %s, %s)", QQ1[1], QQ1[2], QQ1[3], QQ1[4]);
+list GG = vec_product(G,G);
+printf("G * G = (%s, %s, %s, %s)", GG[1], GG[2], GG[3], GG[4]);
+
+// Test conjugate function
+printf("Q = (%s, %s, %s, %s)", Q[1], Q[2], Q[3], Q[4]);
+
+list Q_ = vec_conj(Q);
+printf("Q_ = (%s, %s, %s, %s)", Q_[1], Q_[2], Q_[3], Q_[4]);
+
+// test norm
+list C = 2,2,2,2;
+number normC = vec_norm(C);
+printf("Norm_C = %s", normC);
+// */
+
 
 
 /******************************************************************************************/
