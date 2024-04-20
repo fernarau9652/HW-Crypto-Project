@@ -1,9 +1,9 @@
-/**************************************
+/*************************************************
 ECE 6960: Project
 Fernando Araujo, Elmir Dzaka
 
-Post-Quantum Signature Schnorr Scheme
-***************************************/
+Post-Quantum Signature Scheme using FNAA and HDLP
+*************************************************/
 
 // Vector product between two quaterions
 proc vec_product (list A, list B)
@@ -44,6 +44,18 @@ list A_ = a1, -a2, -a3, -a4;
 return(A_)
 }
 
+
+
+// TODO:
+// make everything into vectors
+// look into lead, and leadcoef to conduct flooring aspect
+// perform inverse of a vector
+// Generate the L'N, R'N, E''N
+// Generate public keys: Y, Z. T.
+// Generate the signature
+// Verify the signature 
+
+// Will need to implement the flooring mechanics to this like in Kalla's slides
 /*
 // Vector norm
 proc vec_norm (list A)
@@ -63,12 +75,24 @@ return(normA)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 // Define prime number (p)
 //number p = 7;
 
 // Define the ring
-ring r = (7, integer), (x), lp;
-//ring r = integer, (x), lp;
+//ring r = (7, integer), (x), lp;
+ring r = integer, (x), lp;
 
 
 // Define invertible vectors Q and G
