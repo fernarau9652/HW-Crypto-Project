@@ -91,8 +91,8 @@ return(normA)
 //number p = 7;
 
 // Define the ring
-//ring r = (7, integer), (x), lp;
-ring r = integer, (x), lp;
+ring r = 7, (x), lp;
+//ring r = integer, (x), lp;
 
 
 // Define invertible vectors Q and G
