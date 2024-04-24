@@ -81,7 +81,41 @@ def compute_z(A, B, N, Rn):
     Z = sub2 * B.inverse
     return Z
 
+def compute_e_double(N, q):
+    # structural coefficents
+    l = 1
+    u = 1
+
+    # perform algorithm
+    E_double = []
+    sub1 = N[0]/((l*N[1]) + (u*N[0]))
+    sub2 = N[1]/((l*N[1]) + (u*N[0]))
+    sub3 = N[2]/((l*N[1]) + (u*N[0]))
+    sub4 = N[3]/((l*N[1]) + (u*N[0]))
+
+    # append operations to matric and create Quaternion
+    E_double.append(sub1)
+    E_double.append(sub2)
+    E_double.append(sub3)
+    E_double.append(sub4)
+
+    quaternion = Quaternion(E_double[0], E_double[1], E_double[2], E_double[3])
+    return quaternion
+
+def compute_e_double_w(N, q):
+    E_double = N ** (q-1)
+    return E_double
+
+def compute_T(A,B,E_double):
+    sub1 = B * E_double
+    T = sub1 * A.inverse
+    return T
+
 def main ():
+    #####################################
+    # KEY GENERATION ALGORITHM 
+    #####################################
+
     # Creating a random Quaternions
     A = Quaternion(1,2,3,4)
     B = Quaternion(2,3,4,5)
@@ -109,6 +143,7 @@ def main ():
     print(vector_product_verify(A,B,N))
 
     # step two: Left sided unit
+    ### d = 0
     d = 0
     Ln_0 = left_sided_unit(A,q,d)
     print(Ln_0)
@@ -117,7 +152,8 @@ def main ():
     Rn_0 = right_sided_unit(A,q,d)
     print(Rn_0)
 
-    # step two: left handed unit
+    ####################################
+    # d = 1
     d = 1
     Ln_1 = left_sided_unit(A,q,d)
     print(Ln_1)
@@ -129,7 +165,8 @@ def main ():
     Rn_1 = right_sided_unit(A,q,d)
     print(Rn_1)
 
-    # step two: Left sided unit
+    ####################################
+    # d = 2
     d = 2
     Ln_2 = left_sided_unit(A,q,d)
     print(Ln_2)
@@ -138,7 +175,8 @@ def main ():
     Rn_2 = right_sided_unit(A,q,d)
     print(Rn_2)
 
-    # step two: left handed unit
+    ####################################
+    # d = 3
     d = 3
     Ln_3 = left_sided_unit(A,q,d)
     print(Ln_3)
@@ -147,7 +185,8 @@ def main ():
     Rn_3 = right_sided_unit(A,q,d)
     print(Rn_3)
 
-   # step two: Left sided unit
+    ####################################
+    # d = 4
     d = 4
     Ln_4 = left_sided_unit(A,q,d)
     print(Ln_4)
@@ -156,7 +195,8 @@ def main ():
     Rn_4 = right_sided_unit(A,q,d)
     print(Rn_4)
 
-    # step two: left handed unit
+    ####################################
+    # d = 5
     d = 5
     Ln_5 = left_sided_unit(A,q,d)
     print(Ln_5)
@@ -165,15 +205,19 @@ def main ():
     Rn_5 = right_sided_unit(A,q,d)
     print(Rn_5)
 
-    # step two: Left sided unit
+    ####################################
+    # d = 6
     d = 6
     Ln_6 = left_sided_unit(A,q,d)
     print(Ln_6)
+
     # Right Sided Unit
     Rn_6 = right_sided_unit(A,q,d)
     print(Rn_6)
 
+    ####################################
 
+    # TODO: Figure out what p is and pass into functions
     # step 3: compute Y
     Y = compute_y(A,B,N,Ln_0,q)
     print(Y)
@@ -181,6 +225,23 @@ def main ():
     # Step 4: compute Z
     Z = compute_z(A, B, N, Rn_0)
     print(Z)
+
+    # Step 5: compute E''
+    # compute forumula 9
+    E_double = compute_e_double(N,q)
+    print(E_double)
+
+    # compute formula 10 to compare with 9
+    E_double_w = compute_e_double_w(N,q)
+    print(E_double_w)
+
+    # Step 6: Compute T
+    T = compute_T(A, B, E_double)
+    print(T)
+
+    #####################################################
+    # SIGNITURE VERIFICATION ALGOIRTHM
+    #####################################################
 
 
 if __name__ == "__main__":
