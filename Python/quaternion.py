@@ -1,6 +1,7 @@
 
 from pyquaternion import Quaternion
 import random
+import hashlib
 
 
 def modulo(quaternion, q):
@@ -21,6 +22,63 @@ def vector_product_verify(Q, G, N):
     else:
         return False
 
+def verify_generator(N,q):
+    p = (2*q) + 1
+    l = 1
+    u = 1
+    
+    for h in range(p):
+        for d in range(p):
+            # generate ln and ln_prime using formulas 5,22
+            ln = [d,h,(N[1]*(1-(l*h)))/(u*N[3]), (N[0]*(1-(u*d)))/(l*N[2])]
+            ln_prime = [d, (1-(u*d))/(l), (N[1]/N[3])*d, (N[0]*(1-(u*d)))/(l*N[2])]
+
+            # generate rn and rn_prime using formulas 7,23
+            rn = [d,h, (N[0]*(1-(u*d)))/(l*N[3]), (N[1]*(1 - (l*h)))/(u*N[2])]
+            rn_prime = [d, (1-(u*d))/(l), (N[0]*(l-u*d))/(l*N[3]), (N[1]/N[2])*d]
+
+            # create Quaternions for lb and ln_prime and perform modulo operation of q
+            ln_q = Quaternion(ln[0],ln[1],ln[2],ln[3])
+            ln_prime_q = Quaternion(ln_prime[0],ln_prime[1],ln_prime[2],ln_prime[3])
+            ln_q = modulo(ln_q, q)
+            ln_prime_q = modulo(ln_prime_q,q)
+            
+            # create Quaternions for rb and rn_prime and perform modulo operation of q
+            rn_q = Quaternion(rn[0],rn[1],rn[2],rn[3])
+            rn_prime_q = Quaternion(rn_prime[0],rn_prime[1],rn_prime[2],rn_prime[3])
+            rn_q = modulo(rn_q, q)
+            rn_prime_q = modulo(rn_prime_q,q)
+
+            # verify if left sided units and right sided units equal their prime, and have same generators
+            if(ln_q == ln_prime_q and rn_q == rn_prime_q):
+                print("d: ", d)
+                print("h: ", h)
+                print("------")
+    return True
+
+def find_non_inv_vec(N, q):
+    # calulate E_double
+    p = (2*q) + 1
+    l = 1
+    u = 1
+    E_double_prime = [(N[0])/((l*N[1])+(u*N[0])), (N[1])/((l*N[1])+(u*N[0])), (N[2])/((l*N[1])+(u*N[0])), (N[3])/((l*N[1])+(u*N[0]))]
+
+    # create quaternion from E_double_prime calculation
+    E_double_prime_q = Quaternion(E_double_prime[0],E_double_prime[1],E_double_prime[2],E_double_prime[3])
+    E_double_prime_q = modulo(E_double_prime_q,q)
+
+    # find unquie non-inv vector that makes E_prime and E_double_prime equal
+    for d in range(p):
+        E_prime = [d, ((l*N[1])-(u * N[0]) + ((u ** 2)*N[0]*d))/((l ** 2) * N[1]), (N[0]*(1 - (u*d)))/(l*N[3]), (N[0]*(1-(u*d)))/(l * N[2])]
+        E_prime_q = Quaternion(E_prime[0], E_prime[1], E_prime[2], E_prime[3])
+        E_prime_q = modulo(E_prime_q,q)
+
+        # check to see if unique non-invertble vector
+        if((E_prime_q[0]*E_prime_q[1]) == (E_prime_q[2]*E_prime_q[3])):
+            return d
+    return -1
+
+
 def left_sided_unit(A, q, d):
     # Initialize structural coefficients and left handed unit
     l = 1
@@ -39,6 +97,7 @@ def left_sided_unit(A, q, d):
     
     # Create Quaternion and return
     new_quaternion = Quaternion(Ln[0], Ln[1], Ln[2], Ln[3])
+    new_quaternion = modulo(new_quaternion,q)
     return new_quaternion
 
 
@@ -59,12 +118,22 @@ def right_sided_unit(A, q, d):
     
     # Create Quaternion
     new_quaternion = Quaternion(Ln[0], Ln[1], Ln[2], Ln[3])
+    new_quaternion = modulo(new_quaternion,q)
 
     return new_quaternion
 
-def compute_y(A, B, N, Ln, q):
+def calculate_e_prime(N,q,d):
+    l = 1
+    u = 1
+
+    E_prime = [d, ((l*N[1])-(u * N[0]) + ((u ** 2)*N[0]*d))/((l ** 2) * N[1]), (N[0]*(1 - (u*d)))/(l*N[3]), (N[0]*(1-(u*d)))/(l * N[2])]
+    E_prime_q = Quaternion(E_prime[0], E_prime[1], E_prime[2], E_prime[3])
+    E_prime_q = modulo(E_prime_q,q)
+
+    return E_prime_q
+
+def compute_y(A, N, Ln, q, x):
     Y_arr = []
-    x = random.randint(0,q-1)
     #x = 1
 
     # raise N to the power of x
@@ -72,13 +141,14 @@ def compute_y(A, B, N, Ln, q):
     sub1 = A*N_raised
     sub2 = sub1*Ln
     Y = sub2*A.inverse
-
+    Y = modulo(Y,q)
     return Y
 
-def compute_z(A, B, N, Rn):
+def compute_z(B, N, Rn, q):
     sub1 = B*Rn
     sub2 = sub1 * N
     Z = sub2 * B.inverse
+    Z = modulo(Z,q)
     return Z
 
 def compute_e_double(N, q):
@@ -103,20 +173,64 @@ def compute_e_double(N, q):
     return quaternion
 
 def compute_e_double_w(N, q):
-    E_double = N ** (q-1)
+    p = (2*q)+1
+    E_double = N ** (p-1)
     return E_double
 
-def compute_T(A,B,E_double):
+def compute_T(A, B, E_double, q):
     sub1 = B * E_double
     T = sub1 * A.inverse
+    T = modulo(T,q)
     return T
+
+def compute_j(B, rn, q):
+    J = B * rn
+    J = modulo(J, q)
+    return J
+
+def compute_u(A, ln, q):
+    U = ln * A.inverse
+    U = modulo(U, q)
+    return U
+
+def compute_V(k, j, N, u, q):
+    V = (j*(N**k)) * u
+    V = modulo(V,q)
+    return V
+
+def compute_F_h(M, V):
+    # convert V into bytes
+    V = str(V)
+    V_bytes = bytes(V, "utf-8")
+
+    # hash the message using SHA
+    M_hashed = hashlib.sha256(M).digest()
+
+    # concatonate hashed M and V to make collision resistant
+    concatenated_data = V_bytes + M_hashed
+
+    # hash again for same reason
+    final_hash = hashlib.sha256(concatenated_data).digest() 
+
+    # return an integer
+    v = int.from_bytes(final_hash, byteorder = 'big')
+    return v
+
+def compute_s(k, x, v, q):
+    s = (k+ (x*v)) % q
+    return s
 
 def main ():
     #####################################
     # KEY GENERATION ALGORITHM 
     #####################################
+    print("################################################")
+    print("KEY GENERATION ALGORITHM")
+    print("################################################")
 
     # Creating a random Quaternions
+    # Q = A
+    # G = B
     A = Quaternion(1,2,3,4)
     B = Quaternion(2,3,4,5)
 
@@ -124,7 +238,7 @@ def main ():
     N = Quaternion(2,1,1,2)
 
     # Print Non-commucative mutiplication
-    print(A*B)
+    #print(A*B)
     AB = A*B;
     
     # do moudlus q operation
@@ -132,116 +246,103 @@ def main ():
     
     # A % q
     A_mod = modulo(A,q);
-    print(A_mod) 
+    #print(A_mod) 
 
     # A*B (mod q)
     AB_mod = modulo(AB,q)
-    print(AB_mod)
+    #print(AB_mod)
 
     # Step 1
     # Verify vectors
+    print("-------------------------------------")
+    print("STEP 1: Verifying Vector Correctness:")
     print(vector_product_verify(A,B,N))
+    print("-------------------------------------")
 
-    # step two: Left sided unit
-    ### d = 0
-    d = 0
-    Ln_0 = left_sided_unit(A,q,d)
-    print(Ln_0)
+    # step two: Make sure that left_sided unit and its prime have a generator given a prime order qi
+    print("STEP 2: Verify generators d,h for ln and rn:")
+    verify_generator(N, q)
+    print("-------------------------------------")
+    #print(verify_generator(ln,ln_prime,q))
 
-    # Right Sided Unit
-    Rn_0 = right_sided_unit(A,q,d)
-    print(Rn_0)
+    # step 3: find non_invertible vector geneated by d,h ln and rn loops. Only one vector is non-invertible within all ln and rn vectors. NOTE: # of vectors generated  by ln/rn formulas is = p-1 vectors
+    print("STEP 3: FInd unique non-inv vector for ln and rn. Find unique d that generates the unique non-inv vec")
+    d = find_non_inv_vec(N,q)
+    print(d)
+    print("Since unique d == 3, we can look at step 2 to find corresponding h. For this example: d == 3 and h == 12. Using these two generators, we input into formulas 22 and 23 to find unique ln,rn to generate public key vectors")
+    print("-------------------------------------")
 
-    ####################################
-    # d = 1
-    d = 1
-    Ln_1 = left_sided_unit(A,q,d)
-    print(Ln_1)
-
-    # maybe do modulo? 
-    #print(modulo(Ln_1,q))
-
-    # right-sided unit 
-    Rn_1 = right_sided_unit(A,q,d)
-    print(Rn_1)
-
-    ####################################
-    # d = 2
-    d = 2
-    Ln_2 = left_sided_unit(A,q,d)
-    print(Ln_2)
-
-    # Right Sided Unit
-    Rn_2 = right_sided_unit(A,q,d)
-    print(Rn_2)
-
-    ####################################
-    # d = 3
+    # step 4: calculate unique public key vectors
+    print("STEP 4: Calculate and store unique ln, rn, and en vectors for public key generation using generators found")
     d = 3
-    Ln_3 = left_sided_unit(A,q,d)
-    print(Ln_3)
+    ln = left_sided_unit(N, q, d)
+    rn = right_sided_unit(N, q, d)
+    e_prime = calculate_e_prime(N, q, d)
 
-    # right-sided unit 
-    Rn_3 = right_sided_unit(A,q,d)
-    print(Rn_3)
+    # print out vectors to double check
+    print("ln: ", ln)
+    print("rn: ", rn)
+    print("e_prime_n: ", e_prime)
 
-    ####################################
-    # d = 4
-    d = 4
-    Ln_4 = left_sided_unit(A,q,d)
-    print(Ln_4)
-
-    # Right Sided Unit
-    Rn_4 = right_sided_unit(A,q,d)
-    print(Rn_4)
-
-    ####################################
-    # d = 5
-    d = 5
-    Ln_5 = left_sided_unit(A,q,d)
-    print(Ln_5)
-
-    # right-sided unit 
-    Rn_5 = right_sided_unit(A,q,d)
-    print(Rn_5)
-
-    ####################################
-    # d = 6
-    d = 6
-    Ln_6 = left_sided_unit(A,q,d)
-    print(Ln_6)
-
-    # Right Sided Unit
-    Rn_6 = right_sided_unit(A,q,d)
-    print(Rn_6)
-
-    ####################################
-
-    # TODO: Figure out what p is and pass into functions
-    # step 3: compute Y
-    Y = compute_y(A,B,N,Ln_0,q)
-    print(Y)
-
-    # Step 4: compute Z
-    Z = compute_z(A, B, N, Rn_0)
-    print(Z)
-
-    # Step 5: compute E''
-    # compute forumula 9
-    E_double = compute_e_double(N,q)
-    print(E_double)
-
-    # compute formula 10 to compare with 9
-    E_double_w = compute_e_double_w(N,q)
-    print(E_double_w)
-
-    # Step 6: Compute T
-    T = compute_T(A, B, E_double)
-    print(T)
+    print("-------------------------------------")
+    print("STEP 5: calculate public key vectors using ln, rn, en. Need random integer x < q")
+    x = random.randint(0,q-1)
+    y = compute_y(A, N, ln, q, x)
+    z = compute_z(B, N, rn, q)
+    t = compute_T(A, B, e_prime, q) 
+    print("x: ", x)
+    print("Y: ", y)
+    print("Z: ", z)
+    print("T: ", t)
+    print("-------------------------------------")
+    print("STEP 6: calculate private keys using ln,rn")
+    j = compute_j(B, rn, q)
+    u = compute_u(A, ln, q)
+    print("J: ", j)
+    print("U: ", u)
+    print("-------------------------------------")
 
     #####################################################
-    # SIGNITURE VERIFICATION ALGOIRTHM
+    # SIGNITURE GENERATION ALGOIRTHM
     #####################################################
+    print("################################################")
+    print("SIGNITURE GENERATION ALGORITHM")
+    print("################################################")
+    print("-------------------------------------")
+    print("STEP 1: select at random an integer k < q to compute signatures (v,s) NOTE: V and v are different here")
+    k = random.randint(0,q-1)
+    V = compute_V(k, j, N, u, q)
+    print("k: ", k)
+    print("V: ", V)
+    print("-------------------------------------")
+    print("STEP 2: Compute signiture element v = F_h(M,V) where M is the given message and F_h is a collision resistent hash function. For simplicity, we use SHA as our hash protocol")
+    M = "Hello World"
+    M = bytes(M, "utf-8")
+    print("The message decrypted into bytes is as follows: ", M)
+    v = compute_F_h(M,V)
+    print("v: ", v)
+    print("-------------------------------------")
+    print("STEP 3: compute second signiture element using first signiture element, v, random integer x, and random integer k")
+    s = compute_s(k, x, v, q)
+    print("s: ", s)
+
+    print("-------------------------------------")
+    print("################################################")
+    print("SIGNITURE VERIFICATION ALGORITHM")
+    print("################################################")
+    print("-------------------------------------")
+    V_prime = (z**s)*(t)*(y**(-v))
+    v_prime = compute_F_h(M,V_prime)
+    print("v_prime: ", v_prime)
+
+
+
+    #yv = y**(-v)
+    #print(yv)
+    #yv_mod = modulo(yv, q)
+    #print(yv_mod)
+    
+
 
 
 if __name__ == "__main__":
