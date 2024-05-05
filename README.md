@@ -1,7 +1,7 @@
 # Verification of Post-Quantum Signature Algorithms using Quaternion Algebra
 ECE 6960-010: Hardware Security/Cryptography - Final Project \
 Institution: University of Utah \
-Instructor: Dr. Priyank Kalla
+Instructor: Dr. Priyank Kalla \
 Contributors: Elmir Dzaka, Fernando Araujo
 
 ## Documentation
