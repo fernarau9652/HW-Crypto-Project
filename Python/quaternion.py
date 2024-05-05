@@ -1,3 +1,7 @@
+#######################################################################
+# Developed by Elmir Dzaka and Fernando Araujo
+# Verification of Post-Quantum Crypto Schemes Using Quaternion Algebra
+#######################################################################
 
 from pyquaternion import Quaternion
 import random
@@ -13,11 +17,25 @@ def modulo(quaternion, q):
     # create new quaternion from the arry and return
     new_quaternion = Quaternion(new_quaternion_arr[0], new_quaternion_arr[1], new_quaternion_arr[2], new_quaternion_arr[3])
     
-    #return new_quaternion
+    # return new_quaternion
     return new_quaternion
 
-def vector_product_verify(Q, G, N):
-    if (Q*N != N*Q) and (G*N != N*G) and (Q*G != G*Q):
+def vector_product_verify(Q, G, N, q):
+    # Compute modulo of all Quaternion arithmetic
+    Q_N = modulo(Q*N, q)
+    N_Q = modulo(N*Q, q)
+
+    G_N = modulo(G*N, q)
+    N_G = modulo(N*G, q)
+
+    Q_G = modulo(Q*G, q)
+    G_Q = modulo(G*Q, q)
+
+    # Verify non-invertibility
+    if (Q_N != N_Q) and (G_N != N_G) and (Q_G != G_Q):
+        print("(A*N != N*A) => ", Q_N, "!=", N_Q)
+        print("(B*N != N*B) => ", G_N, "!=", N_G)
+        print("(A*B != B*A) => ", Q_G, "!=", G_Q)
         return True
     else:
         return False
@@ -51,8 +69,7 @@ def verify_generator(N,q):
 
             # verify if left sided units and right sided units equal their prime, and have same generators
             if(ln_q == ln_prime_q and rn_q == rn_prime_q):
-                print("d: ", d)
-                print("h: ", h)
+                print("(d,h): (",d,",",h,")")
                 print("------")
     return True
 
@@ -134,7 +151,6 @@ def calculate_e_prime(N,q,d):
 
 def compute_y(A, N, Ln, q, x):
     Y_arr = []
-    #x = 1
 
     # raise N to the power of x
     N_raised = N ** x
@@ -206,7 +222,7 @@ def compute_F_h(M, V):
     # hash the message using SHA
     M_hashed = hashlib.sha256(M).digest()
 
-    # concatonate hashed M and V to make collision resistant
+    # concatenate hashed M and V to make collision resistant
     concatenated_data = V_bytes + M_hashed
 
     # hash again for same reason
@@ -241,7 +257,7 @@ def main ():
     #print(A*B)
     AB = A*B;
     
-    # do moudlus q operation
+    # do modulus q operation
     q = 7;
     
     # A % q
@@ -256,7 +272,7 @@ def main ():
     # Verify vectors
     print("-------------------------------------")
     print("STEP 1: Verifying Vector Correctness:")
-    print(vector_product_verify(A,B,N))
+    print(vector_product_verify(A,B,N,q))
     print("-------------------------------------")
 
     # step two: Make sure that left_sided unit and its prime have a generator given a prime order qi
@@ -324,24 +340,27 @@ def main ():
     print("-------------------------------------")
     print("STEP 3: compute second signiture element using first signiture element, v, random integer x, and random integer k")
     s = compute_s(k, x, v, q)
-    print("s: ", s)
-
+    print("s: ", s)    
+    
+    #####################################################
+    # SIGNITURE VERIFICATION ALGOIRTHM
+    #####################################################
     print("-------------------------------------")
     print("################################################")
     print("SIGNITURE VERIFICATION ALGORITHM")
     print("################################################")
     print("-------------------------------------")
-    V_prime = (z**s)*(t)*(y**(-v))
+
+    # Calculate v' and compare with v to see if v'=v
+    V_prime = (y**(-v))*(t)*(z**s) 
     v_prime = compute_F_h(M,V_prime)
     print("v_prime: ", v_prime)
 
+    if(V_prime == v):
+        print("1: encrypted message == message")
+    else:
+        print("0: encrypted message =/ message")
 
-
-    #yv = y**(-v)
-    #print(yv)
-    #yv_mod = modulo(yv, q)
-    #print(yv_mod)
-    
 
 
 
